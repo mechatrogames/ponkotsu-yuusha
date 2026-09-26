@@ -1,0 +1,1251 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ぽんこつ勇者</title>
+<meta name="description" content="ぽんこつ勇者をスマホ・タブレットの横画面で遊べるWeb版（遊ぶ専用）">
+<meta name="theme-color" content="#07060c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ぽんこつ勇者">
+<link rel="manifest" href="manifest.webmanifest">
+<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+<style>
+/* ぽんこつ勇者 Web版の外枠（2026-09-25）。ゲームの見た目（夜の洞窟の紺・すりガラス・水晶の青緑・桃色の決定ボタン）に合わせた一つの暗い見た目。 */
+:root {
+  color-scheme: dark;
+  --ground: #07060c;
+  --ground-2: #0b1024;
+  --ink: #eef4ff;
+  --muted: #b3c1dc;
+  --dim: #7d8aad;
+  --glass: rgba(14, 19, 42, 0.84);
+  --glass-press: rgba(28, 38, 78, 0.94);
+  --edge: rgba(122, 222, 214, 0.62);
+  --edge-soft: rgba(122, 222, 214, 0.24);
+  --rose-top: #ffc0d2;
+  --rose: #ff94b4;
+  --rose-ink: #3a0f1f;
+  --amber: #f3c94f;
+  --sky: #8fd3ff;
+  --font: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans CJK JP", "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  --rail-w: 76px;
+}
+/* 9/26 言語の切り替え：中国語・韓国語は、その言語の字形を持つ端末の字体を先に使う（日本語用の字体だと漢字が日本の字形になる） */
+html[lang="zh-Hans"] { --font: "PingFang SC", "Noto Sans SC", "Noto Sans CJK SC", "Microsoft YaHei", "Source Han Sans SC", system-ui, sans-serif; }
+html[lang="zh-Hant"] { --font: "PingFang TC", "Noto Sans TC", "Noto Sans CJK TC", "Microsoft JhengHei", "Source Han Sans TC", system-ui, sans-serif; }
+html[lang="ko"] { --font: "Apple SD Gothic Neo", "Noto Sans KR", "Noto Sans CJK KR", "Malgun Gothic", system-ui, sans-serif; }
+[hidden] { display: none !important; }
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font);
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+#pk-stage {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 30% 20%, rgba(40, 64, 120, 0.22), transparent 60%),
+    radial-gradient(90% 70% at 85% 90%, rgba(110, 60, 140, 0.16), transparent 65%),
+    var(--ground);
+}
+#pk-play {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 320px;
+  height: 180px;
+  background: #07060c;
+  box-shadow: 0 0 0 1px rgba(122, 222, 214, 0.10), 0 18px 60px rgba(0, 0, 0, 0.55);
+}
+#canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  touch-action: none;
+}
+
+/* ---------- 横の操作ボタン（キーボードの代わり） ---------- */
+#pk-rail {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: var(--rail-w);
+  box-sizing: border-box;
+  padding-block: 4px;
+}
+#pk-rail .pk-top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#pk-rail .pk-grow { flex: 1 1 auto; min-height: 4px; }
+.pk-btn {
+  appearance: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 4px;
+  border: 1px solid var(--edge-soft);
+  border-radius: 14px;
+  background: var(--glass);
+  color: var(--ink);
+  font: 700 clamp(11px, calc(var(--rail-w) * 0.17), 15px)/1.15 var(--font);
+  letter-spacing: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+  touch-action: none;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 80ms ease-out, background-color 120ms, border-color 120ms, opacity 160ms;
+}
+.pk-btn .pk-key {
+  font: 400 10px/1 var(--font);
+  color: var(--dim);
+  letter-spacing: 0.04em;
+}
+.pk-btn:active, .pk-btn.pk-held {
+  transform: scale(0.96);
+  background: var(--glass-press);
+  border-color: var(--edge);
+}
+.pk-btn:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+.pk-btn.pk-off { visibility: hidden; }
+.pk-btn.pk-small { min-height: 34px; padding: 4px; font-size: 11px; font-weight: 400; border-radius: 11px; }
+.pk-btn.pk-main { flex: 1.5 1 0; max-height: 96px; min-height: 60px; font-size: clamp(12px, calc(var(--rail-w) * 0.19), 17px); }
+.pk-btn.pk-mid { flex: 1 1 0; max-height: 66px; }
+.pk-btn.pk-go {
+  background: linear-gradient(180deg, var(--rose-top), var(--rose));
+  border-color: rgba(255, 220, 232, 0.9);
+  color: var(--rose-ink);
+  box-shadow: 0 0 0 1px rgba(255, 150, 185, 0.25), 0 6px 22px rgba(255, 120, 165, 0.28);
+}
+.pk-btn.pk-go .pk-key { color: rgba(58, 15, 31, 0.62); }
+.pk-btn.pk-go:active { background: linear-gradient(180deg, #ffd1de, #ff86ab); }
+.pk-btn.pk-idle { opacity: 0.55; }
+.pk-btn.pk-confirm { border-color: var(--amber); color: var(--amber); }
+/* 確かめの言葉（もう一度で選択へ など）は2行になるので、キーの名前は隠して、低い画面でもボタンに収める（9/26） */
+.pk-btn.pk-confirm .pk-key { display: none; }
+.pk-btn.pk-confirm .pk-label { white-space: pre-line; }   /* 中国語は「再按一次／返回」で折る（1字だけ次の行に残さない） */
+/* 英語・スペイン語は単語の途中で折らない（入りきらない長い語だけ折る）。9/26 言語の切り替え */
+html[lang="en"] .pk-btn, html[lang="es"] .pk-btn { overflow-wrap: break-word; word-break: normal; }
+
+/* ---------- 読み込み・はじめる画面 ---------- */
+#pk-boot {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  background:
+    radial-gradient(70% 60% at 50% 35%, rgba(60, 120, 170, 0.20), transparent 70%),
+    linear-gradient(180deg, #0a0f24, #07060c);
+  overflow: hidden;
+}
+#pk-boot[hidden] { display: none !important; }
+.pk-card {
+  display: grid;
+  justify-items: center;
+  gap: clamp(6px, 2.2vh, 14px);
+  width: min(560px, 100%);
+  text-align: center;
+}
+.pk-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: clamp(22px, 7.5vh, 46px);
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  background: linear-gradient(180deg, #ffffff, #cdf7f1 55%, #7fe0e6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 18px rgba(127, 224, 230, 0.25);
+  text-wrap: balance;
+}
+.pk-hero {
+  width: 32px;
+  height: 32px;
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAAgCAYAAAD9qabkAAAGiklEQVR4nO2cb2gTZxzHv7aibkjdOpbNYjOW1WE7lw4MIl3XmuCL0lJGQF/1RUVl76wU6jYJFCnLfDFhWmED2WQ6szcOHFahoKxTpPSFYzRubWZjtlbXbmGt2g3XFcftxeW5Pne5y11yl/yS3H1fHffv8+v3+3uePLkkBRw5cmRbrcrlIl8gKKjtv/XtxZzuV2p8u4vaf2p+OSkrw5jxYZdH9XgomQCQvyCo+co6lCr3AUDtPzVfWYdSpZi/4Qt8gaDAjK/ydmqetxgdQiiZsNwMaj6rAbDnAKD2n5rPagDKK39DJ/oCQeHUrkNG72l5CNR8VoNdBwC1/9R8VkM55l9hBKw0fzE6pLrNVOXtRNjl0VyqZCNqPl9Dlbczo/n5YFPzqf2n5vM1lGP+GSeAbGdeZSGndh0yZQQ1X6sGuwwAav+p+Vo1lFP+uisANUiVt1MVnKkoM6LiUzcgNZ/JyT97lUr+mhOA8j2Hlql6YeRqAjWflx0HALX/1Hxe5Zy/oRWA2s2VRVj9R1PzqRuQmq8lJ3+5Sj3/rCcApRajQ/D3NcPf16wZTj5VaL5dBkA29Tj5l27+GScAvY8bmPFMfAhWiJpvROU8AKj9p+YbUannv1ptp/LhA7vZ2x+0izsufYr7NyKyaza1dEnbX3JF6H1sUYx8JiMNyMvf14yR4+aYxcCn9p+az2SH/FUnAAA4eO1k2jeOIv0X0DWwJ+MNr0ZOwOV+BWse38GtaO5LE0o+dQNS8wEnf7vkr/oWQPktotHYBPx9zVjf8Bd+nb2Lp+s/TLuG7a+vfR5rHt/F4MGL0rFsPxOl5gNiAy5Gh2QNFOm/oHvd1cgJeA+349W37gAwNwCo+NT+U/MB++Rv+CHg7aHf0NjSiq1fzaFif0vacbX9Vi2FCs2nbkBqvpqc/Msz/6w+Bai8/A0mly8htn067Vhs+zQmly9BiP0u7Tt47aT0A4WOhSXTTUjJN9uAZgchNR9w8i/HCVDzIaDy/defP/+CH/EyXFvfxIsP/oHw7H+y46seVOKH5DN4OBbHaGwCTVsacCX1o4RQICigep1uMcXC15LYgH9gVXNj2rHY9mkIN8chxF4AXqoEIDYgU9jlQdjlQSgQFHL9oUih+NT+U/O1lKv/Wr/eKwa+5kNANnOGXR40bWkQTU0dm697Cu6lKtn5Mw8X8DBxTzIfWFnK5NLwlHyrG9AXCAqhZAIdC0sw0ojUfMDJ3yr/AXEJTzUB6vFVJwBmGL9kYiEgNoFJrxuNr7+Gw/5aAMBHI/cwfvsn1MdmJPPZ9bmET80H8tSAWSxBKfnU/lPzAWv8N6NC8TVXAEzshqMp4wHgi8GjAIAnqXN663ZgLv4GjgxG0LRsmG1IFPx8NaDRZqTm83LyF5WL/9K9spyICsnXLMoXCAodC0vSDT9f8zfqozNSCDsrpgAAbe3VeP/yc7Jr9y+vl7Zz/ecI1HxlDWoNyGsuPoUjgxHL2NR8av+p+coajPrP8ynyz5afcQJg70OY+W0D3WhsaVU9fy4uBnLuwDFMet1SEaOxCVypXmfqfRgVP5cG5JsPKPwAsJJP7T81n/ef1dG724+Pvx5J858flHt7jpqeBArF110BTHrd6N3tl/a7amqk7Y11m2XXsBAASK9GZgOg5PMNeL6nDU/qdmiez9jKV+FS5lP7T83nH8SxwZdpAkrOzgIAGltasTo+hpHjN4uer/sM4HxPm7SdqQEBMZDV8THpupHjN/VurytK/mhsAgDQO9ANABi/cV2zATfWbcZcfArHerrSBmGp8gEnf0mplRc/ySj9V05IsuuLlK85AbCHBzhwGqHP3sH3s/8Cs9cNFb6tZi2a3j2HjoWlnGa/YuDzGu4/i2EA7313BoAYgtJsAKjFPACx+cIHTptBkvOp/afmK7UyEc1rTkT8q7DVyhdf1xj+SeQ+9yNp/5mZDbLztI6ZNZ+Sz5ahwMrgG7+RuQm31ayVDT4zDUjNZzWwbTvn3zbQjW01a8WJSEfD/Welbavyzxc/6/clgGj2mZkNso8r2D4g//8XvZB8vgE9m1zS/sT9pOw8ns/LygFAwVerxa75AysZKP33bHKl7bOilnzzdZ8BqN5M5QslfCD5EgVfds9UowFAAhvSjqWdXwZ81Vrsmn+Kvc/9SOa/LxAUdlZMYafb+jqo+Y4U8gWCwid7A4KV/2evlPiOxAx4/wudCTXf9lIGYDe+I7mo86DmO3LkqET1PzRcf9Ny5pETAAAAAElFTkSuQmCC");
+  background-repeat: no-repeat;
+  background-size: 256px 32px;
+  image-rendering: pixelated;
+  transform: scale(var(--hero-scale, 3));
+  transform-origin: center bottom;
+  margin-block: calc(32px * (var(--hero-scale, 3) - 1)) 2px;
+  animation: pk-walk 0.8s steps(8) infinite;
+}
+@keyframes pk-walk { from { background-position: 0 0; } to { background-position: -256px 0; } }
+.pk-meter {
+  width: min(360px, 80%);
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--edge-soft);
+  overflow: hidden;
+}
+.pk-meter > i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #5fd6d0, #9ff0e6);
+  box-shadow: 0 0 12px rgba(127, 224, 230, 0.6);
+  transition: width 160ms linear;
+}
+.pk-status {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-height: 1.3em;
+}
+.pk-start {
+  appearance: none;
+  border: 1px solid rgba(255, 220, 232, 0.9);
+  border-radius: 999px;
+  padding: 12px 34px;
+  font: 700 clamp(15px, 4.4vh, 20px)/1.2 var(--font);
+  letter-spacing: 0.08em;
+  color: var(--rose-ink);
+  background: linear-gradient(180deg, var(--rose-top), var(--rose));
+  box-shadow: 0 0 0 4px rgba(255, 150, 185, 0.14), 0 10px 30px rgba(255, 120, 165, 0.3);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.pk-start:active { transform: scale(0.97); }
+.pk-start:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; }
+.pk-howto {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 12px;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(14, 19, 42, 0.7);
+  border: 1px solid var(--edge-soft);
+  font-size: clamp(11px, 2.9vh, 13px);
+  line-height: 1.45;
+  text-align: left;
+  color: var(--muted);
+}
+.pk-howto dt { color: var(--ink); font-weight: 700; white-space: nowrap; }
+.pk-howto dd { margin: 0; }
+.pk-note { margin: 0; font-size: 11px; color: var(--dim); }
+.pk-note a { color: var(--muted); text-underline-offset: 2px; }
+.pk-error {
+  margin: 0;
+  max-width: 520px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 138, 150, 0.6);
+  background: rgba(80, 20, 34, 0.55);
+  color: #ffd9de;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: pre-wrap;
+  -webkit-user-select: text;
+  user-select: text;
+  max-height: 46vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* ---------- 縦向きのときの案内 ---------- */
+#pk-rotate {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  place-items: center;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #0a0f24, #07060c);
+  text-align: center;
+}
+#pk-rotate p { margin: 18px 0 0; font-size: 17px; font-weight: 700; }
+#pk-rotate small { display: block; margin-top: 8px; font-size: 13px; color: var(--muted); font-weight: 400; }
+.pk-phone {
+  width: 46px;
+  height: 78px;
+  margin: 0 auto;
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  position: relative;
+  animation: pk-turn 2.4s ease-in-out infinite;
+}
+.pk-phone::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  width: 12px;
+  height: 3px;
+  margin-left: -6px;
+  border-radius: 2px;
+  background: var(--edge);
+}
+@keyframes pk-turn { 0%, 25% { transform: rotate(0deg); } 55%, 100% { transform: rotate(-90deg); } }
+@media (orientation: portrait) and (pointer: coarse) {
+  #pk-rotate { display: grid; }
+}
+
+/* ---------- 小窓（外のページへのリンク。9/26 ランキングを外したので、クリアログの保存の窓は削除） ---------- */
+#pk-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  box-sizing: border-box;
+  background: rgba(3, 4, 10, 0.66);
+}
+#pk-sheet[hidden] { display: none !important; }
+.pk-dialog {
+  display: grid;
+  gap: 12px;
+  width: min(460px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 18px 18px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--edge);
+  background: rgba(12, 17, 38, 0.97);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+.pk-dialog h2 { margin: 0; font-size: 17px; letter-spacing: 0.04em; }
+.pk-dialog p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.pk-dialog .pk-url {
+  font-size: 12px;
+  color: var(--sky);
+  overflow-wrap: anywhere;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.pk-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.pk-act {
+  appearance: none;
+  flex: 1 1 140px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--edge-soft);
+  background: var(--glass);
+  color: var(--ink);
+  font: 700 14px/1.2 var(--font);
+  text-align: center;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.pk-act.pk-go { background: linear-gradient(180deg, var(--rose-top), var(--rose)); color: var(--rose-ink); border-color: rgba(255, 220, 232, 0.9); }
+.pk-act:active { transform: scale(0.98); }
+.pk-act:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+/* ---------- ホーム画面に追加の案内（iPhone・iPad の Safari で開いたときだけ。9/26 作者の依頼） ---------- */
+.pk-a2hs {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 2;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px 7px 9px;
+  white-space: nowrap;
+  border-radius: 14px;
+  border: 1px solid var(--edge);
+  background: linear-gradient(180deg, rgba(24, 44, 78, 0.95), rgba(12, 17, 38, 0.95));
+  box-shadow: 0 0 0 3px rgba(122, 222, 214, 0.10), 0 8px 24px rgba(0, 0, 0, 0.45);
+  color: var(--ink);
+  font: 700 12px/1.3 var(--font);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  animation: pk-a2hs-in 0.5s ease-out both;
+}
+.pk-a2hs[hidden] { display: none !important; }
+.pk-a2hs small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
+.pk-a2hs.pk-compact small { display: none; }
+.pk-a2hs svg { flex: 0 0 auto; width: 26px; height: 26px; }
+.pk-a2hs:active { transform: scale(0.98); }
+.pk-a2hs:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+@keyframes pk-a2hs-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.pk-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; counter-reset: pk-step; }
+.pk-steps li {
+  display: grid;
+  grid-template-columns: 22px 30px 1fr;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.pk-steps li::before {
+  counter-increment: pk-step;
+  content: counter(pk-step);
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--edge-soft);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 12px;
+}
+.pk-steps svg, .pk-steps img { width: 30px; height: 30px; border-radius: 7px; }
+.pk-steps small { display: block; color: var(--muted); font-size: 11px; }
+.pk-dialog .pk-fine { font-size: 11px; color: var(--dim); }
+@media (prefers-reduced-motion: reduce) {
+  .pk-a2hs { animation: none; }
+  .pk-hero, .pk-phone { animation: none; }
+  .pk-btn, .pk-meter > i { transition: none; }
+}
+</style>
+
+<div id="pk-stage">
+  <div id="pk-play">
+    <canvas id="canvas" tabindex="-1">このブラウザでは表示できません。</canvas>
+    <div id="pk-boot">
+      <button class="pk-a2hs" id="pk-a2hs" type="button" hidden>
+        <svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="6" fill="rgba(122,222,214,0.16)" stroke="rgba(122,222,214,0.7)"/><path d="M13 5.5v9M9.5 9 13 5.5 16.5 9" fill="none" stroke="#eef4ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12.5H8a1.5 1.5 0 0 0-1.5 1.5v5A1.5 1.5 0 0 0 8 20.5h10a1.5 1.5 0 0 0 1.5-1.5v-5a1.5 1.5 0 0 0-1.5-1.5h-1" fill="none" stroke="#eef4ff" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span id="pk-a2hs-text">ホーム画面に追加<small>がおすすめ。全画面で快適</small></span>
+      </button>
+      <div class="pk-card" id="pk-card">
+        <h1 class="pk-title">ぽんこつ勇者</h1>
+        <div class="pk-hero" aria-hidden="true"></div>
+        <div class="pk-meter" id="pk-meter" role="progressbar" aria-label="読み込み" aria-valuemin="0" aria-valuemax="100"><i id="pk-meter-fill"></i></div>
+        <p class="pk-status" id="pk-status">読み込みの準備をしています…</p>
+        <button class="pk-start" id="pk-start" type="button" hidden>タップしてはじめる</button>
+        <dl class="pk-howto" id="pk-howto">
+          <dt>タップ</dt><dd>壁をこわす・つくる（クリックと同じ）</dd>
+          <dt>スワイプ</dt><dd>ダッシュ看板を置く（ドラッグと同じ）</dd>
+          <dt>2本指</dt><dd>ひろげて拡大・つまんで縮小、そのまま動かして移動</dd>
+          <dt>右のボタン</dt><dd>スペース・Shift・R・Esc のかわり</dd>
+        </dl>
+        <p class="pk-note" id="pk-note">横向きで遊びます。音が出ます。進みぐあいはこのブラウザに保存されます。　<a href="THIRD_PARTY_LICENSES.txt" target="_blank" rel="noopener">ライセンス</a>・<a href="NOTO_OFL.txt" target="_blank" rel="noopener">フォント</a></p>
+        <p class="pk-error" id="pk-error" hidden></p>
+      </div>
+    </div>
+  </div>
+  <nav id="pk-rail" aria-label="操作ボタン">
+    <div class="pk-top">
+      <button class="pk-btn pk-small pk-off" id="pk-b-fit" type="button" tabindex="-1">全体表示</button>
+      <button class="pk-btn pk-small" id="pk-b-full" type="button" tabindex="-1" hidden>全画面</button>
+    </div>
+    <div class="pk-grow"></div>
+    <button class="pk-btn pk-mid pk-off" id="pk-b-back" type="button" tabindex="-1"><span class="pk-label">もどる</span><span class="pk-key">Esc</span></button>
+    <button class="pk-btn pk-mid pk-off" id="pk-b-retry" type="button" tabindex="-1"><span class="pk-label">やり直し</span><span class="pk-key">R</span></button>
+    <button class="pk-btn pk-mid pk-off" id="pk-b-fast" type="button" tabindex="-1"><span class="pk-label">倍速</span><span class="pk-key">Shift</span></button>
+    <button class="pk-btn pk-main pk-go pk-off" id="pk-b-go" type="button" tabindex="-1"><span class="pk-label">スタート</span><span class="pk-key">スペース</span></button>
+  </nav>
+</div>
+
+<div id="pk-rotate" role="status">
+  <div>
+    <div class="pk-phone" aria-hidden="true"></div>
+    <p>横向きにして遊んでください<small>ぽんこつ勇者は横画面のゲームです</small></p>
+  </div>
+</div>
+
+<div id="pk-sheet" hidden>
+  <div class="pk-dialog" id="pk-dialog" role="dialog" aria-modal="true" aria-labelledby="pk-sheet-title"></div>
+</div>
+
+<script src="index.js"></script>
+<script>
+(function () {
+  'use strict';
+  const GODOT_CONFIG = {"args":[],"canvasResizePolicy":0,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":13974404,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+  const GODOT_THREADS_ENABLED = false;
+  // make_site.py が書き込む：圧縮して分けたファイルの一覧 {wasm:{size, parts:[{url,size}]}, pck:{...}}
+  const PK_FILES = {"wasm": {"size": 39514754, "sha256": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0", "gz": 10054758, "parts": [{"url": "pk-wasm-fc74679e.0.wasm", "size": 9000000}, {"url": "pk-wasm-fc74679e.1.wasm", "size": 1054758}]}, "pck": {"size": 13974404, "sha256": "a5706ffcfc1ac25bd3d1ded939992e6d150e6d2d7177a16f9b3716d6f721161b", "gz": 13374340, "parts": [{"url": "pk-pck-a5706ffc.0.wasm", "size": 9000000}, {"url": "pk-pck-a5706ffc.1.wasm", "size": 4374340}]}};
+  const DPR_CAP = 2;            // 描く解像度は画面の画素の2倍まで（重さを抑える。文字は十分くっきり）
+
+  const $ = (id) => document.getElementById(id);
+  const stage = $('pk-stage');
+  const play = $('pk-play');
+  const canvas = $('canvas');
+  const rail = $('pk-rail');
+  const boot = $('pk-boot');
+  const statusEl = $('pk-status');
+  const meterFill = $('pk-meter-fill');
+  const meter = $('pk-meter');
+  const startBtn = $('pk-start');
+  const errorEl = $('pk-error');
+  const sheet = $('pk-sheet');
+  const dialog = $('pk-dialog');
+  const btn = {
+    fit: $('pk-b-fit'), full: $('pk-b-full'), back: $('pk-b-back'),
+    retry: $('pk-b-retry'), fast: $('pk-b-fast'), go: $('pk-b-go'),
+  };
+
+  // ---------------------------------------------------------------- 言語（9/26 作者の依頼：日本語・英語・中国語（簡体・繁体）・韓国語・スペイン語）
+  // はじめる画面・横のボタン・小窓の言葉。ゲームの中で言語を選ぶと、ゲームが pkLang で知らせ、このブラウザに覚える。
+  // 決め方：前にゲームで選んだ言語 → ブラウザの言語（ゲームと同じく navigator.language だけを見る）→ 英語
+  const LANGS = ['ja', 'en', 'zh_CN', 'zh_TW', 'ko', 'es'];
+  const HTML_LANG = { ja: 'ja', en: 'en', zh_CN: 'zh-Hans', zh_TW: 'zh-Hant', ko: 'ko', es: 'es' };
+  const TEXT = {
+    title: { ja: 'ぽんこつ勇者', en: 'The Bumbling Hero', zh_CN: '废柴勇者', zh_TW: '廢柴勇者', ko: '허당 용사', es: 'La heroína torpe' },
+    loading: { ja: '読み込み', en: 'Loading', zh_CN: '加载', zh_TW: '載入', ko: '불러오기', es: 'Carga' },
+    prep: { ja: '読み込みの準備をしています…', en: 'Getting ready to load…', zh_CN: '正在准备加载…', zh_TW: '正在準備載入…', ko: '불러올 준비를 하고 있습니다…', es: 'Preparando la carga…' },
+    tapStart: { ja: 'タップしてはじめる', en: 'Tap to start', zh_CN: '点按开始', zh_TW: '點按開始', ko: '탭해서 시작', es: 'Toca para empezar' },
+    clickStart: { ja: 'クリックしてはじめる', en: 'Click to start', zh_CN: '点击开始', zh_TW: '點擊開始', ko: '클릭해서 시작', es: 'Haz clic para empezar' },
+    tap: { ja: 'タップ', en: 'Tap', zh_CN: '点按', zh_TW: '點按', ko: '탭', es: 'Tocar' },
+    tapDo: { ja: '壁をこわす・つくる（クリックと同じ）', en: 'Break or build a wall (same as a click)', zh_CN: '拆除或建造墙壁（同点击）', zh_TW: '拆除或建造牆壁（同點擊）', ko: '벽 부수기·만들기 (클릭과 같음)', es: 'Romper o crear un muro (como un clic)' },
+    swipe: { ja: 'スワイプ', en: 'Swipe', zh_CN: '滑动', zh_TW: '滑動', ko: '스와이프', es: 'Deslizar' },
+    swipeDo: { ja: 'ダッシュ看板を置く（ドラッグと同じ）', en: 'Place a dash sign (same as a drag)', zh_CN: '放置冲刺牌（同拖动）', zh_TW: '放置衝刺牌（同拖曳）', ko: '대시 표지판 놓기 (드래그와 같음)', es: 'Colocar una señal de impulso (como arrastrar)' },
+    two: { ja: '2本指', en: 'Two fingers', zh_CN: '双指', zh_TW: '雙指', ko: '두 손가락', es: 'Dos dedos' },
+    twoDo: { ja: 'ひろげて拡大・つまんで縮小、そのまま動かして移動', en: 'Spread to zoom in, pinch to zoom out, drag to move', zh_CN: '张开放大、捏合缩小，拖动来移动', zh_TW: '張開放大、捏合縮小，拖動來移動', ko: '벌려서 확대·오므려서 축소, 그대로 움직여서 이동', es: 'Separa para ampliar, junta para reducir y arrastra para mover' },
+    rightBtns: { ja: '右のボタン', en: 'Right buttons', zh_CN: '右侧按钮', zh_TW: '右側按鈕', ko: '오른쪽 버튼', es: 'Botones derechos' },
+    rightDo: { ja: 'スペース・Shift・R・Esc のかわり', en: 'Stand in for Space, Shift, R and Esc', zh_CN: '代替空格、Shift、R、Esc 键', zh_TW: '代替空白鍵、Shift、R、Esc 鍵', ko: '스페이스·Shift·R·Esc 대신', es: 'Sustituyen a Espacio, Shift, R y Esc' },
+    noteBrowser: { ja: '横向きで遊びます。音が出ます。進みぐあいはこのブラウザに保存されます。', en: 'Play in landscape. The game has sound. Your progress is saved in this browser.', zh_CN: '请横屏游玩。游戏有声音。进度会保存在此浏览器中。', zh_TW: '請橫向遊玩。遊戲有聲音。進度會儲存在此瀏覽器中。', ko: '가로 화면으로 플레이합니다. 소리가 납니다. 진행 상황은 이 브라우저에 저장됩니다.', es: 'Se juega en horizontal. Tiene sonido. Tu progreso se guarda en este navegador.' },
+    noteApp: { ja: '横向きで遊びます。音が出ます。進みぐあいはこのアプリに保存されます。', en: 'Play in landscape. The game has sound. Your progress is saved in this app.', zh_CN: '请横屏游玩。游戏有声音。进度会保存在此应用中。', zh_TW: '請橫向遊玩。遊戲有聲音。進度會儲存在此 App 中。', ko: '가로 화면으로 플레이합니다. 소리가 납니다. 진행 상황은 이 앱에 저장됩니다.', es: 'Se juega en horizontal. Tiene sonido. Tu progreso se guarda en esta app.' },
+    licenses: { ja: 'ライセンス', en: 'Licenses', zh_CN: '许可证', zh_TW: '授權條款', ko: '라이선스', es: 'Licencias' },
+    font: { ja: 'フォント', en: 'Font', zh_CN: '字体', zh_TW: '字型', ko: '글꼴', es: 'Fuente' },
+    rail: { ja: '操作ボタン', en: 'Controls', zh_CN: '操作按钮', zh_TW: '操作按鈕', ko: '조작 버튼', es: 'Controles' },
+    fit: { ja: '全体表示', en: 'Fit view', zh_CN: '全景', zh_TW: '全景', ko: '전체 보기', es: 'Ver todo' },
+    full: { ja: '全画面', en: 'Fullscreen', zh_CN: '全屏', zh_TW: '全螢幕', ko: '전체 화면', es: 'Completa' },
+    fullOff: { ja: '全画面を解除', en: 'Exit fullscreen', zh_CN: '退出全屏', zh_TW: '退出全螢幕', ko: '전체 화면 해제', es: 'Salir' },
+    back: { ja: 'もどる', en: 'Back', zh_CN: '返回', zh_TW: '返回', ko: '뒤로', es: 'Volver' },
+    retry: { ja: 'やり直し', en: 'Retry', zh_CN: '重来', zh_TW: '重來', ko: '다시', es: 'Reintentar' },
+    fast: { ja: '倍速', en: 'Fast', zh_CN: '倍速', zh_TW: '倍速', ko: '배속', es: 'Rápido' },
+    go: { ja: 'スタート', en: 'Start', zh_CN: '开始', zh_TW: '開始', ko: '시작', es: 'Empezar' },
+    space: { ja: 'スペース', en: 'Space', zh_CN: '空格', zh_TW: '空白鍵', ko: '스페이스', es: 'Espacio' },
+    confirmBack: { ja: 'もう一度で選択へ', en: 'Tap again to exit', zh_CN: '再按一次\n返回', zh_TW: '再按一次\n返回', ko: '한 번 더 누르면 나가기', es: 'Otra vez para salir' },
+    rotate: { ja: '横向きにして遊んでください', en: 'Turn your device sideways to play', zh_CN: '请把设备横过来游玩', zh_TW: '請把裝置橫過來遊玩', ko: '가로로 돌려서 플레이해 주세요', es: 'Gira el dispositivo en horizontal para jugar' },
+    rotateSub: { ja: 'ぽんこつ勇者は横画面のゲームです', en: 'The Bumbling Hero is a landscape game', zh_CN: '《废柴勇者》是横屏游戏', zh_TW: '《廢柴勇者》是橫向遊戲', ko: '허당 용사는 가로 화면 게임입니다', es: 'La heroína torpe es un juego en horizontal' },
+    close: { ja: '閉じる', en: 'Close', zh_CN: '关闭', zh_TW: '關閉', ko: '닫기', es: 'Cerrar' },
+    openPageTitle: { ja: 'ページを開く', en: 'Open page', zh_CN: '打开页面', zh_TW: '開啟頁面', ko: '페이지 열기', es: 'Abrir página' },
+    outside: { ja: 'ゲームの外のページです。新しいタブで開きます。', en: 'This page is outside the game. It opens in a new tab.', zh_CN: '这是游戏外的页面，会在新标签页中打开。', zh_TW: '這是遊戲外的頁面，會在新分頁中開啟。', ko: '게임 밖의 페이지입니다. 새 탭에서 열립니다.', es: 'Esta página está fuera del juego. Se abre en una pestaña nueva.' },
+    openPage: { ja: 'ページを開く ↗', en: 'Open page ↗', zh_CN: '打开页面 ↗', zh_TW: '開啟頁面 ↗', ko: '페이지 열기 ↗', es: 'Abrir página ↗' },
+    chipIos: { ja: 'ホーム画面に追加', en: 'Add to Home Screen', zh_CN: '添加到主屏幕', zh_TW: '加入主畫面', ko: '홈 화면에 추가', es: 'Añadir a inicio' },
+    chipIosSub: { ja: 'がおすすめ。全画面で快適', en: 'Recommended: plays fullscreen', zh_CN: '推荐：全屏更顺手', zh_TW: '推薦：全螢幕更順手', ko: '추천: 전체 화면으로 쾌적', es: 'Recomendado: pantalla completa' },
+    chipAndroidSub: { ja: 'アプリのように全画面で開けます', en: 'Opens fullscreen like an app', zh_CN: '像应用一样全屏打开', zh_TW: '像 App 一樣全螢幕開啟', ko: '앱처럼 전체 화면으로 열립니다', es: 'Se abre a pantalla completa, como una app' },
+    a2hsTitle: { ja: 'ホーム画面に追加して遊ぶ（おすすめ）', en: 'Play from your Home Screen (recommended)', zh_CN: '添加到主屏幕再玩（推荐）', zh_TW: '加入主畫面再玩（推薦）', ko: '홈 화면에 추가해서 플레이 (추천)', es: 'Juega desde la pantalla de inicio (recomendado)' },
+    a2hsBody: { ja: 'iPhone・iPad では、ホーム画面のアイコンから開くと、アドレスバーのない全画面になり、スワイプやピンチが Safari の操作とぶつからなくなります。', en: 'On iPhone and iPad, opening the game from a Home Screen icon gives you fullscreen without the address bar, and swipes and pinches no longer clash with Safari.', zh_CN: '在 iPhone 和 iPad 上，从主屏幕图标打开时会变成没有地址栏的全屏，滑动和捏合也不会与 Safari 的操作冲突。', zh_TW: '在 iPhone 和 iPad 上，從主畫面圖示開啟時會變成沒有網址列的全螢幕，滑動和捏合也不會與 Safari 的操作衝突。', ko: 'iPhone·iPad에서는 홈 화면 아이콘으로 열면 주소창 없는 전체 화면이 되어, 스와이프나 핀치가 Safari 조작과 겹치지 않습니다.', es: 'En iPhone y iPad, al abrir el juego desde un icono de la pantalla de inicio se ve a pantalla completa, sin barra de direcciones, y los gestos ya no chocan con Safari.' },
+    step1: { ja: '［共有］ボタンを押す', en: 'Tap the Share button', zh_CN: '点按［分享］按钮', zh_TW: '點按［分享］按鈕', ko: '[공유] 버튼을 누르기', es: 'Toca el botón Compartir' },
+    step1Sub: { ja: '画面の下（横向きや iPad では上）。見当たらないときは「…」の中', en: 'At the bottom of the screen (at the top in landscape or on iPad). If you can’t find it, look under “…”', zh_CN: '在屏幕下方（横屏或 iPad 上在上方）。找不到时在“…”里', zh_TW: '在螢幕下方（橫向或 iPad 上在上方）。找不到時在「…」裡', ko: '화면 아래 (가로 화면이나 iPad에서는 위). 보이지 않으면 \'…\' 안에 있습니다', es: 'Abajo en la pantalla (arriba en horizontal o en iPad). Si no lo ves, búscalo en «…»' },
+    step2: { ja: '［ホーム画面に追加］を選び、［追加］を押す', en: 'Choose “Add to Home Screen”, then tap “Add”', zh_CN: '选择［添加到主屏幕］，再点按［添加］', zh_TW: '選擇［加入主畫面］，再點按［新增］', ko: '[홈 화면에 추가]를 고르고 [추가]를 누르기', es: 'Elige «Añadir a pantalla de inicio» y toca «Añadir»' },
+    step2Sub: { ja: '一覧の下のほうにあります', en: 'It’s near the bottom of the list', zh_CN: '在列表靠下的位置', zh_TW: '在列表靠下的位置', ko: '목록 아래쪽에 있습니다', es: 'Está hacia el final de la lista' },
+    step3: { ja: 'ホーム画面の「ぽんこつ勇者」から開く', en: 'Open “ぽんこつ勇者” from your Home Screen', zh_CN: '从主屏幕上的“ぽんこつ勇者”打开', zh_TW: '從主畫面上的「ぽんこつ勇者」開啟', ko: '홈 화면의 \'ぽんこつ勇者\'에서 열기', es: 'Ábrelo desde «ぽんこつ勇者» en la pantalla de inicio' },
+    a2hsFine: { ja: 'ホーム画面から開いたときの進みぐあいは、Safari で遊んだ分とは別に保存されます。', en: 'Progress when opened from the Home Screen is saved separately from what you played in Safari.', zh_CN: '从主屏幕打开时的进度，会与在 Safari 中游玩的进度分开保存。', zh_TW: '從主畫面開啟時的進度，會與在 Safari 中遊玩的進度分開儲存。', ko: '홈 화면에서 열었을 때의 진행 상황은 Safari에서 플레이한 것과 따로 저장됩니다.', es: 'El progreso desde la pantalla de inicio se guarda aparte del que jugaste en Safari.' },
+    playNow: { ja: 'このまま遊ぶ', en: 'Play now', zh_CN: '直接开始玩', zh_TW: '直接開始玩', ko: '이대로 플레이', es: 'Jugar así' },
+    addFirst: { ja: '追加してから遊ぶ', en: 'Add it first', zh_CN: '先添加再玩', zh_TW: '先加入再玩', ko: '추가한 뒤 플레이', es: 'Añadir primero' },
+    errBrowser: { ja: 'このブラウザではゲームを動かせません。', en: 'This browser can’t run the game.', zh_CN: '此浏览器无法运行游戏。', zh_TW: '此瀏覽器無法執行遊戲。', ko: '이 브라우저에서는 게임을 실행할 수 없습니다.', es: 'Este navegador no puede ejecutar el juego.' },
+    errBrowserHint: { ja: 'Chrome や Safari の新しい版で開いてください。', en: 'Please open it in an up-to-date Chrome or Safari.', zh_CN: '请用新版 Chrome 或 Safari 打开。', zh_TW: '請用新版 Chrome 或 Safari 開啟。', ko: '최신 Chrome이나 Safari에서 열어 주세요.', es: 'Ábrelo en una versión reciente de Chrome o Safari.' },
+    errNoList: { ja: 'ゲームのファイルの一覧がありません。', en: 'The game’s file list is missing.', zh_CN: '缺少游戏的文件列表。', zh_TW: '缺少遊戲的檔案列表。', ko: '게임 파일 목록이 없습니다.', es: 'Falta la lista de archivos del juego.' },
+    errNoListHint: { ja: '書き出しの手順（make_site.py）を確かめてください。', en: 'Check the export steps (make_site.py).', zh_CN: '请检查导出步骤（make_site.py）。', zh_TW: '請檢查匯出步驟（make_site.py）。', ko: '내보내기 절차 (make_site.py)를 확인해 주세요.', es: 'Revisa los pasos de exportación (make_site.py).' },
+    errEnv: { ja: 'この表示環境ではゲームを動かせません。', en: 'The game can’t run in this viewer.', zh_CN: '当前环境无法运行游戏。', zh_TW: '目前環境無法執行遊戲。', ko: '이 환경에서는 게임을 실행할 수 없습니다.', es: 'El juego no puede ejecutarse aquí.' },
+    errEnvBlocked: { ja: 'ゲームの本体（WebAssembly）の実行が止められています。', en: 'Running the game engine (WebAssembly) is blocked here.', zh_CN: '游戏本体（WebAssembly）的运行被阻止了。', zh_TW: '遊戲本體（WebAssembly）的執行被阻擋了。', ko: '게임 본체 (WebAssembly) 실행이 막혀 있습니다.', es: 'Aquí está bloqueada la ejecución del motor del juego (WebAssembly).' },
+    errEnvHint: { ja: '別のブラウザで開くか、配布したフォルダをWebサーバーに置いて開いてください。', en: 'Open it in another browser, or put the distributed folder on a web server and open it there.', zh_CN: '请用其他浏览器打开，或者把分发的文件夹放到 Web 服务器上再打开。', zh_TW: '請用其他瀏覽器開啟，或者把發佈的資料夾放到 Web 伺服器上再開啟。', ko: '다른 브라우저로 열거나, 배포한 폴더를 웹 서버에 올려서 열어 주세요.', es: 'Ábrelo en otro navegador o coloca la carpeta distribuida en un servidor web y ábrela allí.' },
+    loadingPct: { ja: '読み込み中 {p}%（{mb}MB）', en: 'Loading {p}% ({mb} MB)', zh_CN: '加载中 {p}%（{mb}MB）', zh_TW: '載入中 {p}%（{mb}MB）', ko: '불러오는 중 {p}% ({mb}MB)', es: 'Cargando {p} % ({mb} MB)' },
+    loading0: { ja: '読み込み中 0%', en: 'Loading 0%', zh_CN: '加载中 0%', zh_TW: '載入中 0%', ko: '불러오는 중 0%', es: 'Cargando 0 %' },
+    unpack: { ja: '展開しています…', en: 'Unpacking…', zh_CN: '正在解压…', zh_TW: '正在解壓縮…', ko: '압축을 푸는 중…', es: 'Descomprimiendo…' },
+    truncated: { ja: 'ファイルが途中で切れています。ページを読み込み直してください。', en: 'A file was cut off. Please reload the page.', zh_CN: '文件不完整。请重新加载页面。', zh_TW: '檔案不完整。請重新載入頁面。', ko: '파일이 중간에 끊겼습니다. 페이지를 다시 불러와 주세요.', es: 'Un archivo quedó incompleto. Vuelve a cargar la página.' },
+    boot: { ja: '起動の準備をしています…', en: 'Starting up…', zh_CN: '正在准备启动…', zh_TW: '正在準備啟動…', ko: '실행 준비 중…', es: 'Preparando el inicio…' },
+    bootSlow: { ja: '起動の準備をしています…（端末によっては1分ほどかかります）', en: 'Starting up… (this can take about a minute on some devices)', zh_CN: '正在准备启动…（部分设备约需 1 分钟）', zh_TW: '正在準備啟動…（部分裝置約需 1 分鐘）', ko: '실행 준비 중… (기기에 따라 1분 정도 걸립니다)', es: 'Preparando el inicio… (en algunos dispositivos tarda cerca de un minuto)' },
+    starting: { ja: 'はじめています…', en: 'Starting…', zh_CN: '正在开始…', zh_TW: '正在開始…', ko: '시작하는 중…', es: 'Empezando…' },
+    ended: { ja: 'ゲームが終わりました。', en: 'The game has ended.', zh_CN: '游戏已结束。', zh_TW: '遊戲已結束。', ko: '게임이 종료되었습니다.', es: 'El juego ha terminado.' },
+    endedHint: { ja: 'ページを読み込み直すと、保存したところから続けられます。', en: 'Reload the page to continue from where you saved.', zh_CN: '重新加载页面即可从存档处继续。', zh_TW: '重新載入頁面即可從存檔處繼續。', ko: '페이지를 다시 불러오면 저장한 곳부터 이어서 할 수 있습니다.', es: 'Vuelve a cargar la página para seguir desde donde guardaste.' },
+    cantStart: { ja: 'ゲームを起動できませんでした。', en: 'The game couldn’t start.', zh_CN: '无法启动游戏。', zh_TW: '無法啟動遊戲。', ko: '게임을 실행하지 못했습니다.', es: 'No se pudo iniciar el juego.' },
+    loadFailed: { ja: '読み込みに失敗しました。', en: 'Loading failed.', zh_CN: '加载失败。', zh_TW: '載入失敗。', ko: '불러오기에 실패했습니다.', es: 'Error de carga.' },
+    hintReload: { ja: 'ページを読み込み直してください。通信が安定している所で開くと直ることがあります。', en: 'Please reload the page. Opening it where your connection is stable may help.', zh_CN: '请重新加载页面。在网络稳定的地方打开可能会恢复。', zh_TW: '請重新載入頁面。在網路穩定的地方開啟可能會恢復。', ko: '페이지를 다시 불러와 주세요. 통신이 안정적인 곳에서 열면 해결될 수 있습니다.', es: 'Vuelve a cargar la página. Puede ayudar abrirla con una conexión estable.' },
+    hintMemory: { ja: '端末のメモリが足りないようです。ほかのアプリやタブを閉じてから、ページを読み込み直してください。', en: 'Your device seems to be low on memory. Close other apps or tabs, then reload the page.', zh_CN: '设备内存似乎不足。请关闭其他应用或标签页后重新加载页面。', zh_TW: '裝置記憶體似乎不足。請關閉其他 App 或分頁後重新載入頁面。', ko: '기기의 메모리가 부족한 것 같습니다. 다른 앱이나 탭을 닫은 뒤 페이지를 다시 불러와 주세요.', es: 'Parece que el dispositivo tiene poca memoria. Cierra otras apps o pestañas y vuelve a cargar la página.' },
+    hintWasm: { ja: 'この表示環境では、ゲームの本体（WebAssembly）を動かせないようです。別のブラウザで開くか、配布したフォルダをWebサーバーに置いて開いてください。', en: 'The game engine (WebAssembly) can’t run in this viewer. Open it in another browser, or put the distributed folder on a web server and open it there.', zh_CN: '当前环境似乎无法运行游戏本体（WebAssembly）。请用其他浏览器打开，或者把分发的文件夹放到 Web 服务器上再打开。', zh_TW: '目前環境似乎無法執行遊戲本體（WebAssembly）。請用其他瀏覽器開啟，或者把發佈的資料夾放到 Web 伺服器上再開啟。', ko: '이 환경에서는 게임 본체 (WebAssembly)를 실행할 수 없는 것 같습니다. 다른 브라우저로 열거나, 배포한 폴더를 웹 서버에 올려서 열어 주세요.', es: 'Parece que aquí no puede ejecutarse el motor del juego (WebAssembly). Ábrelo en otro navegador o coloca la carpeta distribuida en un servidor web.' },
+    cantLoad: { ja: '読み込めません: ', en: 'Can’t load: ', zh_CN: '无法加载：', zh_TW: '無法載入：', ko: '불러올 수 없습니다: ', es: 'No se puede cargar: ' },
+    cantLoadFile: { ja: 'ファイルを読み込めません: {url}（{status}）', en: 'Can’t load file: {url} ({status})', zh_CN: '无法加载文件：{url}（{status}）', zh_TW: '無法載入檔案：{url}（{status}）', ko: '파일을 불러올 수 없습니다: {url} ({status})', es: 'No se puede cargar el archivo: {url} ({status})' },
+    noWasm: { ja: 'WebAssembly がありません。', en: 'WebAssembly is not available.', zh_CN: '不支持 WebAssembly。', zh_TW: '不支援 WebAssembly。', ko: 'WebAssembly가 없습니다.', es: 'WebAssembly no está disponible.' },
+    canvas: { ja: 'このブラウザでは表示できません。', en: 'This browser can’t display the game.', zh_CN: '此浏览器无法显示。', zh_TW: '此瀏覽器無法顯示。', ko: '이 브라우저에서는 표시할 수 없습니다.', es: 'Este navegador no puede mostrar el juego.' },
+  };
+  function pickLang() {
+    const saved = storeGet(LANG_KEY);
+    if (saved && LANGS.indexOf(saved) >= 0) {
+      return saved;
+    }
+    const l = String(navigator.language || 'ja').toLowerCase().replace('-', '_');
+    if (l.startsWith('ja')) return 'ja';
+    if (l.startsWith('zh')) return /tw|hk|mo|hant/.test(l) ? 'zh_TW' : 'zh_CN';
+    if (l.startsWith('ko')) return 'ko';
+    if (l.startsWith('es')) return 'es';
+    return 'en';
+  }
+  const LANG_KEY = 'pk-lang';
+  let lang = 'ja';
+  function t(key, vars) {
+    const row = TEXT[key];
+    let s = row ? (row[lang] || row.ja) : key;
+    if (vars) {
+      Object.keys(vars).forEach((k) => { s = s.split('{' + k + '}').join(String(vars[k])); });
+    }
+    return s;
+  }
+
+
+  // ---------------------------------------------------------------- 並べ方
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;' +
+    'padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
+  document.body.appendChild(probe);
+  function insets() {
+    const cs = getComputedStyle(probe);
+    return {
+      t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0,
+      b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0,
+    };
+  }
+  function layout() {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const ins = insets();
+    const edge = 6;
+    const gap = 8;
+    const RAIL_MIN = 64;
+    const RAIL_MAX = 100;
+    const roomW = Math.max(200, W - ins.l - ins.r - edge * 2);
+    const roomH = Math.max(90, H - ins.t - ins.b - edge * 2);
+    // まず高さいっぱいの 16:9。横に余りがあれば操作ボタンの列を太くし、足りなければ絵を小さくする
+    let gh = roomH;
+    let gw = gh * 16 / 9;
+    if (gw + gap + RAIL_MIN > roomW) {
+      gw = roomW - gap - RAIL_MIN;
+      gh = gw * 9 / 16;
+    }
+    gw = Math.floor(gw);
+    gh = Math.floor(gh);
+    const railW = Math.floor(Math.max(RAIL_MIN, Math.min(RAIL_MAX, roomW - gw - gap)));
+    const groupW = gw + gap + railW;
+    const x0 = Math.round(ins.l + edge + Math.max(0, (roomW - groupW) / 2));
+    const y0 = Math.round(ins.t + edge + Math.max(0, (roomH - gh) / 2));
+    play.style.left = x0 + 'px';
+    play.style.top = y0 + 'px';
+    play.style.width = gw + 'px';
+    play.style.height = gh + 'px';
+    stage.style.setProperty('--rail-w', railW + 'px');
+    const railH = Math.min(roomH, Math.max(gh, 300));
+    rail.style.left = (x0 + gw + gap) + 'px';
+    rail.style.top = Math.round(ins.t + edge + Math.max(0, (roomH - railH) / 2)) + 'px';
+    rail.style.height = railH + 'px';
+    const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    const cw = Math.max(2, Math.round(gw * dpr));
+    const ch = Math.max(2, Math.round(gh * dpr));
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width = cw;
+      canvas.height = ch;
+    }
+    const heroScale = Math.max(2, Math.min(5, Math.floor(gh / 110)));
+    boot.style.setProperty('--hero-scale', String(heroScale));
+    fitChip();
+  }
+  // ホーム画面に追加の札が題名にかかる狭い画面では、2行目を省いて小さくする
+  function fitChip() {
+    const chip = document.getElementById('pk-a2hs');
+    const title = document.querySelector('.pk-title');
+    if (!chip || chip.hidden || !title) {
+      return;
+    }
+    chip.classList.remove('pk-compact');
+    const c = chip.getBoundingClientRect();
+    const t = title.getBoundingClientRect();
+    if (c.left < t.right + 8 && c.top < t.bottom && c.bottom > t.top) {
+      chip.classList.add('pk-compact');
+    }
+  }
+  window.addEventListener('resize', layout);
+  window.addEventListener('orientationchange', () => setTimeout(layout, 150));
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', layout);
+  }
+  document.addEventListener('fullscreenchange', () => { layout(); updateFullButton(); });
+  document.addEventListener('webkitfullscreenchange', () => { layout(); updateFullButton(); });
+  layout();
+
+  // Godot は window の pointermove を、指の動きも含めて「マウスの動き」として読む。
+  // 指はタッチとして別に届き、ゲーム側（support/hd2d_mobile.gd）でマウスに読み替えるので、指の pointermove はここで止める。
+  // 止めないと、倍速ボタンを押さえている指や2本目の指の動きで、盤の上のマウスの位置がとんでしまう
+  window.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch') {
+      e.stopImmediatePropagation();
+    }
+  }, true);
+
+  // ページごとの拡大・長押しのメニューを止める（ゲームの2本指の操作とぶつからないように）
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((t) => document.addEventListener(t, (e) => e.preventDefault(), { passive: false }));
+  document.addEventListener('touchmove', (e) => {
+    if (!e.target.closest || !e.target.closest('.pk-dialog, .pk-error')) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener('dblclick', (e) => e.preventDefault());
+
+  // ---------------------------------------------------------------- 全画面
+  const fsTarget = document.documentElement;
+  const canFullscreen = !!(fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen) &&
+    (document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  function isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+  function enterFullscreen() {
+    if (!canFullscreen || isFullscreen()) {
+      return;
+    }
+    try {
+      const p = fsTarget.requestFullscreen ? fsTarget.requestFullscreen({ navigationUI: 'hide' }) : fsTarget.webkitRequestFullscreen();
+      if (p && p.then) {
+        p.then(() => {
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+          }
+        }).catch(() => {});
+      }
+    } catch (e) {
+      // 全画面にできない表示環境（アプリの中など）。そのまま遊べる
+    }
+  }
+  function exitFullscreen() {
+    try {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    } catch (e) {
+      // 何もしない
+    }
+  }
+  function updateFullButton() {
+    btn.full.hidden = !canFullscreen || !started;
+    btn.full.textContent = isFullscreen() ? t('fullOff') : t('full');
+  }
+  // ゲームから（F11）：ページごと全画面にする
+  window.pkFullscreen = function (how) {
+    if (how === 'on' || (how === 'toggle' && !isFullscreen())) {
+      enterFullscreen();
+    } else {
+      exitFullscreen();
+    }
+  };
+  btn.full.addEventListener('click', () => {
+    if (isFullscreen()) {
+      exitFullscreen();
+    } else {
+      enterFullscreen();
+    }
+    refocus();
+  });
+
+  // ---------------------------------------------------------------- 横の操作ボタン → ゲームのキー
+  function refocus() {
+    try { canvas.focus({ preventScroll: true }); } catch (e) { /* 何もしない */ }
+  }
+  function sendKey(name, down) {
+    if (typeof window.pkGodotKey === 'function') {
+      window.pkGodotKey(name, down);
+    }
+  }
+  btn.go.addEventListener('click', () => { sendKey('space', true); refocus(); });
+  btn.retry.addEventListener('click', () => { sendKey('r', true); refocus(); });
+  btn.back.addEventListener('click', () => { sendKey('esc', true); refocus(); });
+  btn.fit.addEventListener('click', () => {
+    if (typeof window.pkGodotView === 'function') {
+      window.pkGodotView('reset');
+    }
+    refocus();
+  });
+  // 倍速は押している間だけ（Shift と同じ）。指が外へずれても離すまで続ける
+  let fastHeld = false;
+  function fastUp() {
+    if (fastHeld) {
+      fastHeld = false;
+      btn.fast.classList.remove('pk-held');
+      sendKey('shift', false);
+    }
+  }
+  btn.fast.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    try { btn.fast.setPointerCapture(e.pointerId); } catch (err) { /* 何もしない */ }
+    fastHeld = true;
+    btn.fast.classList.add('pk-held');
+    sendKey('shift', true);
+  });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => btn.fast.addEventListener(t, fastUp));
+  window.addEventListener('blur', fastUp);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      fastUp();
+      if (typeof window.pkGodotView === 'function') {
+        window.pkGodotView('touchreset');
+      }
+    }
+  });
+
+  function setBtn(b, label) {
+    const on = !!label;
+    b.classList.toggle('pk-off', !on);
+    b.disabled = !on;
+    b.setAttribute('aria-hidden', on ? 'false' : 'true');
+    if (on) {
+      b.querySelector('.pk-label').textContent = label;
+    }
+  }
+  // ゲームから：スペース・R・Esc・Shift が今なにをするか（空ならボタンを休ませる）
+  window.pkUi = function (json) {
+    let st = {};
+    try { st = JSON.parse(json); } catch (e) { return; }
+    setBtn(btn.go, st.p);
+    setBtn(btn.retry, st.r);
+    setBtn(btn.back, st.c ? t('confirmBack') : st.b);
+    btn.back.classList.toggle('pk-confirm', !!st.c);
+    const playing = !!st.r;
+    setBtn(btn.fast, playing ? t('fast') : '');
+    btn.fast.classList.toggle('pk-idle', playing && !st.f);
+    if (!playing) {
+      fastUp();
+    }
+    btn.fit.classList.toggle('pk-off', !st.z);
+    btn.fit.disabled = !st.z;
+  };
+
+  // ---------------------------------------------------------------- 小窓（外のページへのリンク。9/26 クリアログの保存の窓は削除）
+  function el(tag, attrs, text) {
+    const e = document.createElement(tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => e.setAttribute(k, v));
+    if (text != null) {
+      e.textContent = text;
+    }
+    return e;
+  }
+  function openSheet(build) {
+    dialog.replaceChildren();
+    build(dialog);
+    sheet.hidden = false;
+    const first = dialog.querySelector('a, button');
+    if (first) {
+      first.focus({ preventScroll: true });
+    }
+  }
+  function closeSheet() {
+    sheet.hidden = true;
+    dialog.replaceChildren();
+    refocus();
+  }
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
+  function closeButton(parent) {
+    const c = el('button', { type: 'button', class: 'pk-act' }, t('close'));
+    c.addEventListener('click', closeSheet);
+    parent.appendChild(c);
+  }
+  window.pkOpenUrl = function (url, title) {
+    openSheet((d) => {
+      d.appendChild(el('h2', { id: 'pk-sheet-title' }, String(title || t('openPageTitle'))));
+      d.appendChild(el('p', {}, t('outside')));
+      d.appendChild(el('p', { class: 'pk-url' }, String(url)));
+      const row = el('div', { class: 'pk-row' });
+      row.appendChild(el('a', { class: 'pk-act pk-go', href: String(url), target: '_blank', rel: 'noopener' }, t('openPage')));
+      closeButton(row);
+      d.appendChild(row);
+    });
+  };
+
+  // ---------------------------------------------------------------- 読み込み
+  let statusKey = null;
+  let statusVars = null;
+  function setStatus(key, vars) {
+    statusKey = key || null;
+    statusVars = vars || null;
+    statusEl.textContent = key ? t(key, vars) : '';
+  }
+  function setMeter(frac) {
+    const pct = Math.max(0, Math.min(100, Math.round(frac * 100)));
+    meterFill.style.width = pct + '%';
+    meter.setAttribute('aria-valuenow', String(pct));
+  }
+  function showError(message, detail) {
+    errorEl.hidden = false;
+    errorEl.textContent = message + (detail ? '\n\n' + detail : '');
+    startBtn.hidden = true;
+    meter.hidden = true;
+    // 小さい横画面でも知らせが隠れないように、遊び方の説明はしまう
+    $('pk-howto').hidden = true;
+    $('pk-note').hidden = true;
+    setStatus(null);
+    document.querySelector('.pk-hero').style.animationPlayState = 'paused';
+  }
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error(t('cantLoad') + src));
+      document.head.appendChild(s);
+    });
+  }
+  async function fetchParts(parts, onBytes) {
+    const chunks = [];
+    for (const p of parts) {
+      const res = await fetch(p.url, { cache: 'force-cache' });
+      if (!res.ok) {
+        throw new Error(t('cantLoadFile', { url: p.url, status: res.status }));
+      }
+      if (res.body && res.body.getReader) {
+        const reader = res.body.getReader();
+        for (;;) {
+          const r = await reader.read();
+          if (r.done) {
+            break;
+          }
+          chunks.push(r.value);
+          onBytes(r.value.byteLength);
+        }
+      } else {
+        const b = new Uint8Array(await res.arrayBuffer());
+        chunks.push(b);
+        onBytes(b.byteLength);
+      }
+    }
+    return new Blob(chunks);
+  }
+  async function gunzip(blob) {
+    // 配信側が gzip をすでに解いて渡してきたときは、そのまま使う（大きさはあとで確かめる）
+    const head = new Uint8Array(await blob.slice(0, 2).arrayBuffer());
+    if (head[0] !== 0x1f || head[1] !== 0x8b) {
+      return await blob.arrayBuffer();
+    }
+    if (typeof DecompressionStream === 'function') {
+      const stream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
+      return await new Response(stream).arrayBuffer();
+    }
+    if (typeof window.fflate === 'undefined') {
+      await loadScript('https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js');
+    }
+    const out = window.fflate.gunzipSync(new Uint8Array(await blob.arrayBuffer()));
+    return out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength);
+  }
+
+  // WebAssembly を動かしてよい表示環境かを、23MB を読み込む前に確かめる（8バイトの空のモジュールを試しに作る）
+  async function wasmProblem() {
+    if (typeof WebAssembly !== 'object' || typeof WebAssembly.compile !== 'function') {
+      return t('noWasm');
+    }
+    try {
+      await WebAssembly.compile(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]));
+      return '';
+    } catch (e) {
+      return String(e && e.message || e);
+    }
+  }
+
+  let started = false;
+  let engine = null;
+  const exe = GODOT_CONFIG.executable || 'index';
+
+  async function prepare() {
+    const missing = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
+    if (missing.length) {
+      showError(t('errBrowser'), missing.join('\n') + '\n\n' + t('errBrowserHint'));
+      return;
+    }
+    if (!PK_FILES) {
+      showError(t('errNoList'), t('errNoListHint'));
+      return;
+    }
+    const blocked = await wasmProblem();
+    if (blocked) {
+      showError(t('errEnv'), t('errEnvBlocked') + '\n' + blocked + '\n\n' + t('errEnvHint'));
+      return;
+    }
+    const total = PK_FILES.wasm.parts.concat(PK_FILES.pck.parts).reduce((a, p) => a + p.size, 0);
+    let got = 0;
+    const onBytes = (n) => {
+      got += n;
+      setMeter(got / total * 0.9);
+      setStatus('loadingPct', { p: Math.min(100, Math.floor(got / total * 100)), mb: (total / 1048576).toFixed(0) });
+    };
+    setStatus('loading0');
+    const [wasmGz, pckGz] = await Promise.all([fetchParts(PK_FILES.wasm.parts, onBytes), fetchParts(PK_FILES.pck.parts, onBytes)]);
+    setStatus('unpack');
+    const [wasmBuf, pckBuf] = await Promise.all([gunzip(wasmGz), gunzip(pckGz)]);
+    if (wasmBuf.byteLength !== PK_FILES.wasm.size || pckBuf.byteLength !== PK_FILES.pck.size) {
+      throw new Error(t('truncated'));
+    }
+    setMeter(0.94);
+    // 本体（wasm）はここで用意したものを渡す（Godot の読み込みは fetch で index.wasm を取りに来る）
+    let wasmForEngine = wasmBuf;
+    const realFetch = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+      const url = typeof input === 'string' ? input : (input && input.url) || '';
+      if (wasmForEngine && url.split('?')[0].endsWith(exe + '.wasm')) {
+        const body = wasmForEngine;
+        wasmForEngine = null;
+        return Promise.resolve(new Response(body, { status: 200, headers: { 'Content-Type': 'application/wasm' } }));
+      }
+      return realFetch(input, init);
+    };
+    setStatus('boot');
+    engine = new Engine(Object.assign({}, GODOT_CONFIG, { canvas: canvas }));
+    // Godot の読み込み処理は WebAssembly の失敗（メモリ不足など）を拾わずに止まるので、ここで拾って知らせる
+    let onReject = null;
+    const failed = new Promise((resolve, reject) => {
+      onReject = (ev) => {
+        const r = ev.reason;
+        const text = String(r && r.message || r);
+        if (/wasm|WebAssembly|CompileError|LinkError|RuntimeError|unsafe-eval|memory|allocate/i.test(text)) {
+          ev.preventDefault();
+          reject(r instanceof Error ? r : new Error(text));
+        }
+      };
+      window.addEventListener('unhandledrejection', onReject);
+    });
+    const slow = setTimeout(() => setStatus('bootSlow'), 15000);
+    try {
+      await Promise.race([engine.init(exe), failed]);
+    } finally {
+      clearTimeout(slow);
+      window.removeEventListener('unhandledrejection', onReject);
+      window.fetch = realFetch;
+    }
+    await engine.preloadFile(pckBuf, exe + '.pck');
+    setMeter(1);
+    setStatus(null);
+    meter.hidden = true;
+    startBtn.hidden = false;
+    startBtn.focus({ preventScroll: true });
+  }
+
+  function start() {
+    if (started || !engine) {
+      return;
+    }
+    started = true;
+    enterFullscreen();
+    startBtn.hidden = true;
+    $('pk-howto').hidden = true;
+    $('pk-note').hidden = true;
+    setStatus('starting');
+    engine.start({
+      args: ['--main-pack', exe + '.pck'],
+      canvas: canvas,
+      onExit: () => {
+        boot.hidden = false;
+        showError(t('ended'), t('endedHint'));
+      },
+    }).then(() => {
+      updateFullButton();
+      refocus();
+      setTimeout(() => { if (!gameReady) boot.hidden = true; }, 12000);
+    }, (err) => {
+      boot.hidden = false;
+      showError(t('cantStart'), String(err && err.message || err));
+    });
+  }
+  let chipMode = 'ios';
+  function applyChip() {
+    $('pk-a2hs-text').replaceChildren(document.createTextNode(t('chipIos')), el('small', {}, t(chipMode === 'android' ? 'chipAndroidSub' : 'chipIosSub')));
+    fitChip();
+  }
+  function applyLang() {
+    document.documentElement.lang = HTML_LANG[lang] || 'ja';
+    document.title = t('title');
+    canvas.textContent = t('canvas');
+    document.querySelector('.pk-title').textContent = t('title');
+    meter.setAttribute('aria-label', t('loading'));
+    if (statusKey) {
+      statusEl.textContent = t(statusKey, statusVars);
+    }
+    const coarse = !window.matchMedia || window.matchMedia('(pointer: coarse)').matches;
+    startBtn.textContent = t(coarse ? 'tapStart' : 'clickStart');
+    const howto = $('pk-howto');
+    howto.replaceChildren();
+    [['tap', 'tapDo'], ['swipe', 'swipeDo'], ['two', 'twoDo'], ['rightBtns', 'rightDo']].forEach((pair) => {
+      howto.appendChild(el('dt', {}, t(pair[0])));
+      howto.appendChild(el('dd', {}, t(pair[1])));
+    });
+    const note = $('pk-note');
+    note.replaceChildren(document.createTextNode(t(standalone ? 'noteApp' : 'noteBrowser') + (lang === 'en' || lang === 'es' ? '  ' : '　')),
+      el('a', { href: 'THIRD_PARTY_LICENSES.txt', target: '_blank', rel: 'noopener' }, t('licenses')),
+      document.createTextNode(lang === 'ja' ? '・' : ' · '),   // 「・」は日本語だけ（中国語・韓国語は「·」）
+      el('a', { href: 'NOTO_OFL.txt', target: '_blank', rel: 'noopener' }, t('font')));
+    rail.setAttribute('aria-label', t('rail'));
+    btn.fit.textContent = t('fit');
+    updateFullButton();
+    [[btn.back, 'back'], [btn.retry, 'retry'], [btn.fast, 'fast'], [btn.go, 'go']].forEach((pair) => {
+      if (pair[0].classList.contains('pk-off')) {
+        pair[0].querySelector('.pk-label').textContent = t(pair[1]);
+      }
+    });
+    btn.go.querySelector('.pk-key').textContent = t('space');
+    const rot = document.querySelector('#pk-rotate p');
+    rot.replaceChildren(document.createTextNode(t('rotate')), el('small', {}, t('rotateSub')));
+    applyChip();
+  }
+  let gameReady = false;
+  window.pkReady = function () {
+    gameReady = true;
+    boot.hidden = true;
+    layout();
+    refocus();
+  };
+  // ---------------------------------------------------------------- ホーム画面に追加の案内（9/26 作者の依頼）
+  // iPhone・iPad の Safari では、ホーム画面のアイコンから開くと全画面になり、スワイプやピンチが Safari の操作とぶつからない。
+  // Safari で開いたときだけ、はじめる画面の右上に案内を出し、最初に「はじめる」を押したときに一度だけ手順の小窓を出す。
+  // ホーム画面から開いたとき・ほかのページの中（アーティファクトなど）で開いたときは出さない。
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const mq = (q) => !!(window.matchMedia && window.matchMedia(q).matches);
+  const standalone = navigator.standalone === true || mq('(display-mode: standalone)') || mq('(display-mode: fullscreen)') || mq('(display-mode: minimal-ui)');
+  let embedded = true;
+  try {
+    embedded = window.top !== window.self;
+  } catch (e) {
+    embedded = true;
+  }
+  const guideIOS = isIOS && !standalone && !embedded;
+  const a2hsChip = $('pk-a2hs');
+  const A2HS_KEY = 'pk-a2hs-shown';
+  function storeGet(k) {
+    try { return window.localStorage.getItem(k); } catch (e) { return null; }
+  }
+  function storeSet(k, v) {
+    try { window.localStorage.setItem(k, v); } catch (e) { /* 保存できない表示環境。毎回出るだけ */ }
+  }
+  // はじめる画面の注意書き（ホーム画面から開いたときは「このアプリに保存」）は applyLang が書く
+  const ICON_SHARE = '<svg viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="7" fill="#1b2a52"/><path d="M15 6.5v10M11 10.5l4-4 4 4" fill="none" stroke="#8fd3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 14.5h-1.5A1.5 1.5 0 0 0 8 16v6a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 22 22v-6a1.5 1.5 0 0 0-1.5-1.5H19" fill="none" stroke="#8fd3ff" stroke-width="2" stroke-linecap="round"/></svg>';
+  const ICON_ADD = '<svg viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="7" fill="#1b2a52"/><rect x="7.5" y="7.5" width="15" height="15" rx="3.5" fill="none" stroke="#8fd3ff" stroke-width="2"/><path d="M15 11v8M11 15h8" stroke="#8fd3ff" stroke-width="2" stroke-linecap="round"/></svg>';
+  function step(list, iconHtml, main, sub) {
+    const li = el('li');
+    li.insertAdjacentHTML('beforeend', iconHtml);
+    const t = el('span', {}, main);
+    if (sub) {
+      t.appendChild(el('small', {}, sub));
+    }
+    li.appendChild(t);
+    list.appendChild(li);
+  }
+  function a2hsSheet(fromStart) {
+    storeSet(A2HS_KEY, '1');
+    openSheet((d) => {
+      d.appendChild(el('h2', { id: 'pk-sheet-title' }, t('a2hsTitle')));
+      d.appendChild(el('p', {}, t('a2hsBody')));
+      const ol = el('ol', { class: 'pk-steps' });
+      step(ol, ICON_SHARE, t('step1'), t('step1Sub'));
+      step(ol, ICON_ADD, t('step2'), t('step2Sub'));
+      step(ol, '<img src="index.apple-touch-icon.png" alt="">', t('step3'), '');
+      d.appendChild(ol);
+      d.appendChild(el('p', { class: 'pk-fine' }, t('a2hsFine')));
+      const row = el('div', { class: 'pk-row' });
+      if (fromStart) {
+        const go = el('button', { type: 'button', class: 'pk-act pk-go' }, t('playNow'));
+        go.addEventListener('click', () => { closeSheet(); start(); });
+        row.appendChild(go);
+        const later = el('button', { type: 'button', class: 'pk-act' }, t('addFirst'));
+        later.addEventListener('click', closeSheet);
+        row.appendChild(later);
+      } else {
+        closeButton(row);
+      }
+      d.appendChild(row);
+    });
+  }
+  // Android の Chrome などは、その場で「ホーム画面に追加」の確認を出せる
+  let installPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // スマホ・タブレットだけ（パソコンの Chrome はアドレスバーの「インストール」に任せる）
+    if (embedded || standalone || !mq('(pointer: coarse)')) {
+      return;
+    }
+    e.preventDefault();
+    installPrompt = e;
+    chipMode = 'android';
+    applyChip();
+    a2hsChip.hidden = false;
+    fitChip();
+  });
+  window.addEventListener('appinstalled', () => { a2hsChip.hidden = true; });
+  a2hsChip.addEventListener('click', () => {
+    if (installPrompt) {
+      const p = installPrompt;
+      installPrompt = null;
+      try {
+        p.prompt();
+        Promise.resolve(p.userChoice).finally(() => { a2hsChip.hidden = true; });
+      } catch (e) {
+        a2hsChip.hidden = true;
+      }
+      return;
+    }
+    a2hsSheet(false);
+  });
+  if (guideIOS) {
+    a2hsChip.hidden = false;
+    fitChip();
+  }
+  startBtn.addEventListener('click', () => {
+    if (guideIOS && !storeGet(A2HS_KEY)) {
+      a2hsSheet(true);
+      return;
+    }
+    start();
+  });
+  // 言語：はじめる画面・横のボタンの言葉を書く。ゲームが始まったら、ゲームの言語に合わせる（pkLang）
+  lang = pickLang();
+  applyLang();
+  window.pkLang = function (code) {
+    if (LANGS.indexOf(code) < 0) {
+      return;
+    }
+    storeSet(LANG_KEY, code);
+    if (code !== lang) {
+      lang = code;
+      applyLang();
+    }
+  };
+  window.pkDebug = { layout: layout, get engine() { return engine; }, get started() { return started; } };
+
+  prepare().catch((err) => {
+    console.error(err);
+    const text = String(err && err.message || err);
+    let hint = t('hintReload');
+    if (/memory|allocate/i.test(text)) {
+      hint = t('hintMemory');
+    } else if (/wasm|WebAssembly|CompileError|unsafe-eval/i.test(text)) {
+      hint = t('hintWasm');
+    }
+    showError(t('loadFailed'), text + '\n\n' + hint);
+  });
+}());
+</script>
+

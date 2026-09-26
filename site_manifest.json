@@ -1,0 +1,75 @@
+{
+ "preset": "Web Mobile 20260925",
+ "files": {
+  "NOTO_OFL.txt": {
+   "bytes": 4540,
+   "sha256": "b71acfc56bca06c9a5ef67ea514e245ff5700553f2b55c94567b9ecea1b8f2ce"
+  },
+  "THIRD_PARTY_LICENSES.txt": {
+   "bytes": 98047,
+   "sha256": "864675fb8492ddd6c86f2cbf7ae89a753a94f89e009661002a5ccf56db05c156"
+  },
+  "icon-192.png": {
+   "bytes": 12537,
+   "sha256": "ca106509c47aa6b918a0771f37959ab2b44ab020055c305e679a56f2c4c4767c"
+  },
+  "icon-512.png": {
+   "bytes": 36602,
+   "sha256": "4d7824cdcd64dca58b9ea4c0bdf56563c8fdc14a3d23c817ae71163e177fd9ff"
+  },
+  "index.apple-touch-icon.png": {
+   "bytes": 9527,
+   "sha256": "847877d371d7399a8355ef81b0c9bcb876de62cadd4b7f74cc598f3b313ee0dd"
+  },
+  "index.audio.position.worklet.js": {
+   "bytes": 2973,
+   "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8"
+  },
+  "index.audio.worklet.js": {
+   "bytes": 7298,
+   "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3"
+  },
+  "index.html": {
+   "bytes": 70200,
+   "sha256": "57da3efa14724a31b5cb2afba1870e54ead65ea7ce1a8517cf801c4939d11ae2"
+  },
+  "index.icon.png": {
+   "bytes": 2222,
+   "sha256": "d703108acb8424215e8868421587697205f036fc35c141666ea7927bde8a8124"
+  },
+  "index.js": {
+   "bytes": 279815,
+   "sha256": "33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba"
+  },
+  "manifest.webmanifest": {
+   "bytes": 776,
+   "sha256": "5bafad21d4fd4ab380825aff7ca918401b917b75da0693d752bbf7a540f012b6"
+  },
+  "pk-pck-a5706ffc.0.wasm": {
+   "bytes": 9000000,
+   "sha256": "442d35ba8b60d03cba9d5786705a3eefc41b25884bcaaa23ac4ab47903026bc6"
+  },
+  "pk-pck-a5706ffc.1.wasm": {
+   "bytes": 4374340,
+   "sha256": "2aa03cc54141f7513d4065fdd8b3b5392df2557b10b9ef4580875def480f9915"
+  },
+  "pk-wasm-fc74679e.0.wasm": {
+   "bytes": 9000000,
+   "sha256": "1d8ace58650ffee89f343dc5b41f6e11c9587903dd182350398123c827e630da"
+  },
+  "pk-wasm-fc74679e.1.wasm": {
+   "bytes": 1054758,
+   "sha256": "d8daa092625e6fbac51c3564395c4237fa368e5426a50479c96fb5e3508b6323"
+  }
+ },
+ "wasm": {
+  "size": 39514754,
+  "sha256": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0",
+  "gz": 10054758
+ },
+ "pck": {
+  "size": 13974404,
+  "sha256": "a5706ffcfc1ac25bd3d1ded939992e6d150e6d2d7177a16f9b3716d6f721161b",
+  "gz": 13374340
+ }
+}

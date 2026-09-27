@@ -31,7 +31,7 @@
   },
   "index.html": {
    "bytes": 70200,
-   "sha256": "57da3efa14724a31b5cb2afba1870e54ead65ea7ce1a8517cf801c4939d11ae2"
+   "sha256": "c4130187e2785aae80c4144fab7d8517ea700e58d84f3cf0b4ec099574626fa3"
   },
   "index.icon.png": {
    "bytes": 2222,
@@ -45,13 +45,13 @@
    "bytes": 776,
    "sha256": "5bafad21d4fd4ab380825aff7ca918401b917b75da0693d752bbf7a540f012b6"
   },
-  "pk-pck-a5706ffc.0.wasm": {
+  "pk-pck-9c3c851d.0.wasm": {
    "bytes": 9000000,
-   "sha256": "442d35ba8b60d03cba9d5786705a3eefc41b25884bcaaa23ac4ab47903026bc6"
+   "sha256": "c5b7ce892c6fee4226923a4bb1d6d6f76183b72430818cb8fb8948e3803cbc47"
   },
-  "pk-pck-a5706ffc.1.wasm": {
-   "bytes": 4374340,
-   "sha256": "2aa03cc54141f7513d4065fdd8b3b5392df2557b10b9ef4580875def480f9915"
+  "pk-pck-9c3c851d.1.wasm": {
+   "bytes": 4381275,
+   "sha256": "f9a5552b764093df2a0add677842ebff887c7a3aa5eca47291a24dcd1f49fca3"
   },
   "pk-wasm-fc74679e.0.wasm": {
    "bytes": 9000000,
@@ -68,8 +68,8 @@
   "gz": 10054758
  },
  "pck": {
-  "size": 13974404,
-  "sha256": "a5706ffcfc1ac25bd3d1ded939992e6d150e6d2d7177a16f9b3716d6f721161b",
-  "gz": 13374340
+  "size": 13988108,
+  "sha256": "9c3c851d52920302b2513d4f4fd618bf0f54bea5bd9989a12d0d6663fb6bf409",
+  "gz": 13381275
  }
 }

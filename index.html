@@ -492,7 +492,13 @@ html[lang="en"] .pk-btn, html[lang="es"] .pk-btn { overflow-wrap: break-word; wo
   const GODOT_THREADS_ENABLED = false;
   // make_site.py が書き込む：圧縮して分けたファイルの一覧 {wasm:{size, parts:[{url,size}]}, pck:{...}}
   const PK_FILES = {"wasm": {"size": 39514754, "sha256": "fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0", "gz": 10054758, "parts": [{"url": "pk-wasm-fc74679e.0.wasm", "size": 9000000}, {"url": "pk-wasm-fc74679e.1.wasm", "size": 1054758}]}, "pck": {"size": 13988108, "sha256": "9c3c851d52920302b2513d4f4fd618bf0f54bea5bd9989a12d0d6663fb6bf409", "gz": 13381275, "parts": [{"url": "pk-pck-9c3c851d.0.wasm", "size": 9000000}, {"url": "pk-pck-9c3c851d.1.wasm", "size": 4381275}]}};
-  const DPR_CAP = 2;            // 描く解像度は画面の画素の2倍まで（重さを抑える。文字は十分くっきり）
+  // 描く解像度（canvas の画素）＝ゲームの絵の大きさ（CSS の画素）×画面の細かさ。
+  // 画面の細かさは3倍まで＝スマホの画面の画素のまま描く（9/27 作者「文字が見づらく、文字だけでも解像度を上げて欲しいです」。
+  // 前は2倍までで、iPhone（3倍）では描いた絵をブラウザが1.5倍に引き伸ばし、小さい文字がにじんでいた。3倍なら iPhone の横画面で
+  // ゲームの絵がほぼ 1920×1080＝作りの大きさになる）。2倍を超える分は、画素の数が 2112×1188（1920×1080 の1.1倍）を超えない
+  // 所までにする（大きな高精細の画面で重くならないように。2倍より下げることはない＝前より粗くなる端末はない）
+  const DPR_CAP = 3;
+  const HI_DPR_PIXELS = 2112 * 1188;
 
   const $ = (id) => document.getElementById(id);
   const stage = $('pk-stage');
@@ -658,7 +664,10 @@ html[lang="en"] .pk-btn, html[lang="es"] .pk-btn { overflow-wrap: break-word; wo
     rail.style.left = (x0 + gw + gap) + 'px';
     rail.style.top = Math.round(ins.t + edge + Math.max(0, (roomH - railH) / 2)) + 'px';
     rail.style.height = railH + 'px';
-    const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    let dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    if (dpr > 2) {
+      dpr = Math.max(2, Math.min(dpr, Math.sqrt(HI_DPR_PIXELS / Math.max(1, gw * gh))));
+    }
     const cw = Math.max(2, Math.round(gw * dpr));
     const ch = Math.max(2, Math.round(gh * dpr));
     if (canvas.width !== cw || canvas.height !== ch) {
